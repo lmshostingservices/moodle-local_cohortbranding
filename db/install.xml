@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/cohortbranding/db" VERSION="2025122200" COMMENT="Cohort branding settings storage">
+  <TABLES>
+    <TABLE NAME="local_cohortbranding" COMMENT="Stores branding settings per cohort">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cohortid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Reference to cohort table"/>
+        <FIELD NAME="logourl" TYPE="text" NOTNULL="false" COMMENT="Custom logo URL for this cohort"/>
+        <FIELD NAME="primarycolor" TYPE="char" LENGTH="7" NOTNULL="false" COMMENT="Primary brand color hex"/>
+        <FIELD NAME="secondarycolor" TYPE="char" LENGTH="7" NOTNULL="false" COMMENT="Secondary brand color hex"/>
+        <FIELD NAME="fontfamily" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="CSS font-family value"/>
+        <FIELD NAME="fonturl" TYPE="text" NOTNULL="false" COMMENT="Google Fonts or custom font URL"/>
+        <FIELD NAME="priority" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="0" COMMENT="Higher priority wins when user in multiple cohorts"/>
+        <FIELD NAME="enabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Whether branding is active"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="cohortid_unique" TYPE="unique" FIELDS="cohortid"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="priority_idx" UNIQUE="false" FIELDS="priority"/>
+        <INDEX NAME="enabled_idx" UNIQUE="false" FIELDS="enabled"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
