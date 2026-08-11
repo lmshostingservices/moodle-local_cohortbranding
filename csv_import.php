@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Cohort Branding - CSV Bulk Import with Auto-Scraping
  *
@@ -231,7 +246,7 @@ function local_cohortbranding_parse_csv($filepath) {
         $linenum++;
         if ($linenum === 1) {
             // Normalise header names
-            $headers = array_map(function($h) {
+            $headers = array_map(function ($h) {
                 return strtolower(trim(str_replace([' ', '-'], '_', $h)));
             }, $row);
             continue;
@@ -558,9 +573,9 @@ if ($step === 2 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
     ?>
     <script>
     // Select all checkbox
-    document.getElementById('selectall').addEventListener('change', function() {
+    document.getElementById('selectall').addEventListener('change', function () {
         var cbs = document.querySelectorAll('tbody input[type=checkbox]:not([disabled])');
-        cbs.forEach(function(cb){ cb.checked = this.checked; }, this);
+        cbs.forEach(function (cb){ cb.checked = this.checked; }, this);
         updateImportData();
     });
 
@@ -579,7 +594,7 @@ if ($step === 2 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
         document.getElementById('importjson').value = JSON.stringify(importData);
     }
     // Sync color pickers to hidden fields and data array
-    document.addEventListener('input', function(e) {
+    document.addEventListener('input', function (e) {
         if (e.target && e.target.id && e.target.id.startsWith('color_')) {
             updateImportData();
         }
