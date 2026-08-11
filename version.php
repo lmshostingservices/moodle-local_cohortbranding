@@ -30,7 +30,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_cohortbranding';
-$plugin->version   = 2026072300212;          // 2026-04-10, v1.3.15
+$plugin->version   = 2026072300;          // 2026-04-10, v1.3.15
 $plugin->requires  = 2022041900;           // Moodle 4.0 minimum
 $plugin->supported = [400, 500];           // Moodle 4.0 to 5.x
 $plugin->maturity  = MATURITY_STABLE;
