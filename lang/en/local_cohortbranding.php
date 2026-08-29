@@ -97,6 +97,7 @@ $string['privacy:metadata'] = 'The Cohort Branding plugin does not store any per
 
 // Cache.
 $string['cachedef_userbranding'] = 'Cached branding settings per user for performance.';
+$string['cachedef_invalidationevents'] = 'Cohort branding cache invalidation events.';
 
 // Unlock verification
 $string['unlock_required'] = 'This plugin requires 1000 AI credits to unlock. Please visit your AI Grader dashboard at lms-labs.com to unlock this plugin.';
