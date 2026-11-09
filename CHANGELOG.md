@@ -1,3 +1,12 @@
+## [v1.3.21] - 2026-11-09
+
+### Changed
+- Logo is now set with a standard Moodle file manager upload on the add/edit page instead of a URL field.
+- Uploaded logos are stored in the plugin's `logo` file area (system context) and served via `pluginfile.php` to logged-in users.
+- An uploaded logo takes precedence; an existing/CSV-imported logo URL is still used as a fallback and can be cleared from the edit page.
+- Uploaded logo files are removed when a branding record is deleted.
+- CSV import now downloads each logo (scraped or from `logo_url`) and stores it as an uploaded file, so imported and manually edited cohorts use the same storage. Downloads use Moodle's curl wrapper (proxy and blocked-host settings apply), are type-checked from file content, capped at 5 MB, and SVGs containing scripts or external references are rejected. If a download fails, the URL is kept as a fallback and a warning is shown.
+
 ## [v1.3.20] - 2026-08-29
 
 ### Changed

@@ -25,6 +25,9 @@
 require('../../config.php');
 require_once($CFG->dirroot . '/local/cohortbranding/classes/manager.php');
 require_once($CFG->dirroot . '/cohort/lib.php');
+require_once($CFG->libdir . '/filelib.php');
+require_once($CFG->dirroot . '/repository/lib.php');
+require_once($CFG->libdir . '/form/filemanager.php');
 
 $id = optional_param('id', 0, PARAM_INT);
 
@@ -34,6 +37,9 @@ require_capability('local/cohortbranding:manage', context_system::instance());
 $PAGE->set_url('/local/cohortbranding/edit.php', ['id' => $id]);
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('admin');
+
+$syscontext = context_system::instance();
+$logooptions = \local_cohortbranding\manager::logo_filemanager_options();
 
 if ($id) {
     $record = \local_cohortbranding\manager::get_branding($id);
@@ -62,7 +68,11 @@ if (optional_param('submitbutton', false, PARAM_BOOL) && confirm_sesskey()) {
     $data = new stdClass();
     $data->id = $id;
     $data->cohortid = required_param('cohortid', PARAM_INT);
-    $data->logourl = optional_param('logourl', '', PARAM_URL);
+    // Logo is now an uploaded file. Keep any existing URL (e.g. from CSV import)
+    // unless the admin chose to clear it.
+    if (optional_param('clearlogourl', 0, PARAM_BOOL)) {
+        $data->logourl = '';
+    }
     $data->primarycolor = optional_param('primarycolor', '', PARAM_TEXT);
     $data->secondarycolor = optional_param('secondarycolor', '', PARAM_TEXT);
     $data->fontfamily = optional_param('fontfamily', '', PARAM_TEXT);
@@ -91,7 +101,19 @@ if (optional_param('submitbutton', false, PARAM_BOOL) && confirm_sesskey()) {
         }
     }
 
-    \local_cohortbranding\manager::save_branding($data);
+    $savedid = \local_cohortbranding\manager::save_branding($data);
+
+    // Save the uploaded logo from the draft area.
+    $draftitemid = required_param('logofile', PARAM_INT);
+    file_save_draft_area_files(
+        $draftitemid,
+        $syscontext->id,
+        'local_cohortbranding',
+        \local_cohortbranding\manager::LOGO_FILEAREA,
+        $savedid,
+        $logooptions
+    );
+    \local_cohortbranding\manager::invalidate_cache();
 
     $message = $id ? get_string('brandingsaved', 'local_cohortbranding') : get_string('brandingcreated', 'local_cohortbranding');
     redirect(
@@ -106,6 +128,33 @@ if (optional_param('submitbutton', false, PARAM_BOOL) && confirm_sesskey()) {
 if (optional_param('cancel', false, PARAM_BOOL)) {
     redirect(new moodle_url('/local/cohortbranding/index.php'));
 }
+
+// Prepare the logo draft area (copies any existing logo into a draft for editing).
+$draftitemid = file_get_submitted_draft_itemid('logofile');
+file_prepare_draft_area(
+    $draftitemid,
+    $syscontext->id,
+    'local_cohortbranding',
+    \local_cohortbranding\manager::LOGO_FILEAREA,
+    $id ?: null,
+    $logooptions
+);
+
+$fmoptions = new stdClass();
+$fmoptions->maxbytes = $logooptions['maxbytes'];
+$fmoptions->areamaxbytes = FILE_AREA_MAX_BYTES_UNLIMITED;
+$fmoptions->maxfiles = $logooptions['maxfiles'];
+$fmoptions->subdirs = $logooptions['subdirs'];
+$fmoptions->accepted_types = $logooptions['accepted_types'];
+$fmoptions->return_types = $logooptions['return_types'];
+$fmoptions->itemid = $draftitemid;
+$fmoptions->client_id = uniqid();
+$fmoptions->target = 'id_logofile';
+$fmoptions->context = $syscontext;
+$fmoptions->mainfile = false;
+$filemanagerhtml = $PAGE->get_renderer('core', 'files')->render(new form_filemanager($fmoptions));
+
+$haslogofile = $id && \local_cohortbranding\manager::get_logo_file($id);
 
 echo $OUTPUT->header();
 
@@ -177,15 +226,26 @@ $fontoptions = [
 
     <div class="fitem row form-group mb-3">
         <div class="col-md-3">
-            <label for="logourl" class="col-form-label">
-                <?php echo get_string('logourl', 'local_cohortbranding'); ?>
+            <label class="col-form-label">
+                <?php echo get_string('logofile', 'local_cohortbranding'); ?>
             </label>
         </div>
         <div class="col-md-9">
-            <input type="url" name="logourl" id="logourl" class="form-control" 
-                   value="<?php echo s($record->logourl); ?>"
-                   placeholder="https://example.com/logo.png">
-            <small class="form-text text-muted"><?php echo get_string('logourl_desc', 'local_cohortbranding'); ?></small>
+            <?php echo $filemanagerhtml; ?>
+            <input type="hidden" name="logofile" id="id_logofile" value="<?php echo (int)$draftitemid; ?>">
+            <small class="form-text text-muted"><?php echo get_string('logofile_desc', 'local_cohortbranding'); ?></small>
+            <?php if (!empty($record->logourl)): ?>
+                <div class="alert alert-info mt-2 mb-0 p-2">
+                    <?php echo get_string($haslogofile ? 'logourl_overridden' : 'logourl_current', 'local_cohortbranding'); ?>
+                    <br><code><?php echo s($record->logourl); ?></code>
+                    <div class="form-check mt-1">
+                        <input type="checkbox" name="clearlogourl" id="clearlogourl" value="1" class="form-check-input">
+                        <label for="clearlogourl" class="form-check-label">
+                            <?php echo get_string('clearlogourl', 'local_cohortbranding'); ?>
+                        </label>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 

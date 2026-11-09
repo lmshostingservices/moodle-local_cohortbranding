@@ -300,6 +300,7 @@ if ($step === 3 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
     $importrows = json_decode($importjson, true);
 
     $created = 0; $skipped = 0; $errors = [];
+    $logosstored = 0; $logowarnings = [];
 
     if ($importrows) {
         foreach ($importrows as $row) {
@@ -355,13 +356,30 @@ if ($step === 3 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
             $data->enabled        = 1;
 
             try {
-                \local_cohortbranding\manager::save_branding($data);
+                $brandingid = \local_cohortbranding\manager::save_branding($data);
                 $created++;
+
+                // 4. Download the logo and store it as an uploaded file.
+                // On success the URL is cleared; on failure it is kept as a fallback.
+                if ($logourl) {
+                    $logoerror = \local_cohortbranding\manager::store_logo_from_url($brandingid, $logourl);
+                    if ($logoerror === '') {
+                        $DB->set_field('local_cohortbranding', 'logourl', '', ['id' => $brandingid]);
+                        $logosstored++;
+                    } else {
+                        $logowarnings[] = get_string('csv_import_logofailed', 'local_cohortbranding',
+                            (object)['name' => $name, 'error' => $logoerror]);
+                    }
+                }
             } catch (Exception $e) {
                 $errors[] = "Could not save branding for \"{$name}\": " . $e->getMessage();
                 $skipped++;
             }
         }
+    }
+
+    if ($logosstored) {
+        \local_cohortbranding\manager::invalidate_cache();
     }
 
     // Show results
@@ -373,6 +391,15 @@ if ($step === 3 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
             get_string('csv_import_success', 'local_cohortbranding', $created),
             'success'
         );
+    }
+    if ($logosstored > 0) {
+        echo $OUTPUT->notification(
+            get_string('csv_import_logosstored', 'local_cohortbranding', $logosstored),
+            'success'
+        );
+    }
+    foreach ($logowarnings as $warning) {
+        echo $OUTPUT->notification($warning, 'warning');
     }
     if ($skipped > 0) {
         echo $OUTPUT->notification("{$skipped} row(s) skipped (already have branding or no name).", 'info');
