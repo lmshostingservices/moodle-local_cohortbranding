@@ -16,8 +16,8 @@
 
 /**
  * Cohort Branding v1.3.0 - Version information
- * 
- * [1️⃣ Platform & Compatibility]
+ *
+ *
  * - Moodle 4.0-5.x support declared
  * - PHP 8.1+ baseline requirement
  * - Semantic versioning
@@ -30,11 +30,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_cohortbranding';
-$plugin->version   = 2026111102;          // 2026-11-11, v1.3.23
-$plugin->requires  = 2022041900;           // Moodle 4.0 minimum
-$plugin->supported = [400, 500];           // Moodle 4.0 to 5.x
+$plugin->version   = 2026111103;          // 2026-11-11, v1.4.0
+$plugin->requires  = 2022041900;           // Moodle 4.0 minimum.
+$plugin->supported = [400, 503];           // Moodle 4.0 to 5.3.
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.23'; // Font output, cohort-membership cache refresh, Premium SaaS theme support.
+$plugin->release   = '1.4.0'; // Client Portal support, Moodle 5.3.
 
 // PHP version requirement - raised to 8.1 for modern features.
 $plugin->requires_php = '8.1';

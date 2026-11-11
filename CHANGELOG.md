@@ -1,3 +1,12 @@
+## [v1.4.0] - 2026-11-11
+
+### Added
+- Works with Client Portal (local_clientportal 1.0.4+): each client's portal uses its cohort's logo, colours and font.
+
+### Changed
+- Supported range raised to Moodle 4.0 to 5.3 (`$plugin->supported = [400, 503]`), so Moodle 5.1 to 5.3 no longer show an "unsupported" warning. Tested on Moodle 4.5.15 and 5.3.
+- PHPUnit metadata uses attributes (ready for PHPUnit 12).
+
 ## [v1.3.23] - 2026-11-11
 
 ### Fixed
@@ -7,6 +16,11 @@
 
 ### Added
 - `--cohort-font` CSS variable alongside `--cohort-primary` and `--cohort-secondary`.
+- A Diagnostic messages setting. Off by default, so pages stay silent in developer debugging mode.
+
+### Changed
+- Passes the Moodle coding standard (moodle-cs) with no errors: docblocks added, variable names made lower case, long lines wrapped, and the edit and CSV import pages output their HTML from PHP. Pages render exactly as before.
+- Diagnostic messages go through Moodle's debugging() instead of the PHP error log.
 - Works with the Premium SaaS theme (theme_lmslabs 1.5.38+), which reads the cohort's colour, logo and font directly.
 
 ## [v1.3.22] - 2026-11-11

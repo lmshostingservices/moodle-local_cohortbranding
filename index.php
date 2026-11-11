@@ -28,7 +28,7 @@ require_once($CFG->dirroot . '/local/cohortbranding/classes/manager.php');
 require_login();
 require_capability('local/cohortbranding:manage', context_system::instance());
 
-// Check unlock status
+// Check unlock status.
 if (class_exists('\local_cohortbranding\unlock_verifier')) {
     if (!\local_cohortbranding\unlock_verifier::check_and_notify()) {
         $PAGE->set_url('/local/cohortbranding/index.php');
@@ -74,11 +74,11 @@ $availablecohorts = \local_cohortbranding\manager::get_available_cohorts();
 echo html_writer::start_div('', ['style' => 'display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;']);
 if (!empty($availablecohorts)) {
     echo html_writer::link($addurl, get_string('add', 'local_cohortbranding'), [
-        'class' => 'btn btn-primary'
+        'class' => 'btn btn-primary',
     ]);
 }
 echo html_writer::link($importurl, get_string('csv_import', 'local_cohortbranding'), [
-    'class' => 'btn btn-outline-primary'
+    'class' => 'btn btn-outline-primary',
 ]);
 echo html_writer::end_div();
 
@@ -107,20 +107,22 @@ if (empty($brandings)) {
         $deleteurl = new moodle_url('/local/cohortbranding/index.php', [
             'delete' => $b->id,
             'confirm' => 1,
-            'sesskey' => sesskey()
+            'sesskey' => sesskey(),
         ]);
 
         $primaryswatch = '';
         if (!empty($b->primarycolor)) {
             $primaryswatch = html_writer::tag('span', '', [
-                'style' => "display:inline-block;width:20px;height:20px;background:{$b->primarycolor};border:1px solid #ccc;border-radius:3px;margin-right:5px;vertical-align:middle;"
+                'style' => "display:inline-block;width:20px;height:20px;background:{$b->primarycolor};" .
+                    'border:1px solid #ccc;border-radius:3px;margin-right:5px;vertical-align:middle;',
             ]) . $b->primarycolor;
         }
 
         $secondaryswatch = '';
         if (!empty($b->secondarycolor)) {
             $secondaryswatch = html_writer::tag('span', '', [
-                'style' => "display:inline-block;width:20px;height:20px;background:{$b->secondarycolor};border:1px solid #ccc;border-radius:3px;margin-right:5px;vertical-align:middle;"
+                'style' => "display:inline-block;width:20px;height:20px;background:{$b->secondarycolor};" .
+                    'border:1px solid #ccc;border-radius:3px;margin-right:5px;vertical-align:middle;',
             ]) . $b->secondarycolor;
         }
 
@@ -131,7 +133,7 @@ if (empty($brandings)) {
         $actions = html_writer::link($editurl, get_string('edit'), ['class' => 'btn btn-sm btn-outline-primary me-1 mr-1']) . ' ';
         $actions .= html_writer::link($deleteurl, get_string('delete'), [
             'class' => 'btn btn-sm btn-outline-danger',
-            'onclick' => "return confirm('" . get_string('confirmdelete', 'local_cohortbranding') . "');"
+            'onclick' => "return confirm('" . get_string('confirmdelete', 'local_cohortbranding') . "');",
         ]);
 
         $table->data[] = [
@@ -141,7 +143,7 @@ if (empty($brandings)) {
             s($b->fontfamily),
             $b->priority,
             $enabledbadge,
-            $actions
+            $actions,
         ];
     }
 

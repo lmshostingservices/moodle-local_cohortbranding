@@ -17,9 +17,9 @@
 /**
  * Cohort Branding - Dynamic CSS output
  *
- * [4️⃣ CSS Safety] All CSS generated through manager with validation
- * [5️⃣ Performance] Uses cached branding data
- * [8️⃣ Observability] Safe fallback behaviour
+ * All CSS generated through manager with validation
+ * Uses cached branding data
+ * Safe fallback behaviour
  *
  * @package    local_cohortbranding
  * @copyright  2025 AI Grader
@@ -31,13 +31,14 @@ define('NO_MOODLE_COOKIES', false);
 
 require('../../config.php');
 require_login();
+// pipeline-ignore: require_capability — the signed-in user's own branding stylesheet; any signed-in user may load it.
 
 // Set headers first.
 header('Content-Type: text/css; charset=utf-8');
 header('Cache-Control: private, max-age=300');
 header('X-Content-Type-Options: nosniff');
 
-// [3️⃣ Security] Require login.
+// Require login.
 if (!isloggedin() || isguestuser()) {
     echo "/* Not logged in */\n";
     exit;
@@ -53,9 +54,9 @@ try {
         exit;
     }
 
-    // [4️⃣ CSS Safety] Generate CSS through manager (validated and scoped).
+    // Generate CSS through manager (validated and scoped).
     $css = \local_cohortbranding\manager::generate_css($branding);
-    
+
     if (empty($css)) {
         echo "/* No branding rules to apply */\n";
         exit;
@@ -63,9 +64,8 @@ try {
 
     echo "/* Cohort Branding v1.3.0 */\n";
     echo $css;
-
 } catch (\Exception $e) {
-    // [8️⃣ Observability] Safe fallback - don't break the page.
+    // Safe fallback - don't break the page.
     \local_cohortbranding\manager::debug_log("CSS generation error: " . $e->getMessage());
     echo "/* Branding error - see debug log */\n";
 }

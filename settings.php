@@ -25,39 +25,49 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    // Create settings page
+    // Create settings page.
     $settings = new admin_settingpage('local_cohortbranding', get_string('pluginname', 'local_cohortbranding'));
-    
-    // Check if Central Config plugin is installed (provides site-wide credentials)
+
+    // Check if Central Config plugin is installed (provides site-wide credentials).
     $centralconfiginstalled = file_exists($CFG->dirroot . '/local/aiconfig/version.php');
-    
-    // API Credentials heading
+
+    // API Credentials heading.
     $settings->add(new admin_setting_heading(
         'local_cohortbranding/apicredentials',
         get_string('apicredentials', 'local_cohortbranding'),
         get_string('apicredentials_desc', 'local_cohortbranding')
     ));
-    
-    // Site ID (fallback if Central Config not installed)
+
+    $fallback = $centralconfiginstalled ? ' ' . get_string('centralconfig_fallback', 'local_cohortbranding') : '';
+
+    // Site ID (fallback if Central Config not installed).
     $settings->add(new admin_setting_configtext(
         'local_cohortbranding/siteid',
         get_string('siteid', 'local_cohortbranding'),
-        get_string('siteid_desc', 'local_cohortbranding') . ($centralconfiginstalled ? ' ' . get_string('centralconfig_fallback', 'local_cohortbranding') : ''),
+        get_string('siteid_desc', 'local_cohortbranding') . $fallback,
         '',
         PARAM_TEXT
     ));
-    
-    // API Key (fallback if Central Config not installed)
+
+    // API Key (fallback if Central Config not installed).
     $settings->add(new admin_setting_configpasswordunmask(
         'local_cohortbranding/apikey',
         get_string('apikey', 'local_cohortbranding'),
-        get_string('apikey_desc', 'local_cohortbranding') . ($centralconfiginstalled ? ' ' . get_string('centralconfig_fallback', 'local_cohortbranding') : ''),
+        get_string('apikey_desc', 'local_cohortbranding') . $fallback,
         ''
     ));
-    
+
+    // Diagnostic messages for troubleshooting (shown only with developer debugging on).
+    $settings->add(new admin_setting_configcheckbox(
+        'local_cohortbranding/debuglog',
+        get_string('debuglog', 'local_cohortbranding'),
+        get_string('debuglog_desc', 'local_cohortbranding'),
+        0
+    ));
+
     $ADMIN->add('localplugins', $settings);
-    
-    // Add management page under appearance
+
+    // Add management page under appearance.
     $ADMIN->add('appearance', new admin_externalpage(
         'local_cohortbranding_manage',
         get_string('pluginname', 'local_cohortbranding'),

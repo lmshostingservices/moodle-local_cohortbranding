@@ -17,7 +17,7 @@
 /**
  * Cohort Branding - Cache definitions
  *
- * [5️⃣ Performance] MUC caching for user branding lookups
+ * MUC caching for user branding lookups
  *
  * @package    local_cohortbranding
  * @copyright  2025 AI Grader

@@ -17,7 +17,7 @@
 /**
  * Cohort Branding - PHPUnit tests for manager class
  *
- * [9️⃣ Testing] Automated tests for core functionality
+ * Automated tests for core functionality
  *
  * @package    local_cohortbranding
  * @copyright  2025 AI Grader
@@ -26,14 +26,11 @@
 
 namespace local_cohortbranding;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Test cases for the manager class.
- *
- * @covers \local_cohortbranding\manager
  */
-class manager_test extends \advanced_testcase {
+#[\PHPUnit\Framework\Attributes\CoversClass(manager::class)]
+final class manager_test extends \advanced_testcase {
     /**
      * Set up before each test.
      */
@@ -68,10 +65,14 @@ class manager_test extends \advanced_testcase {
      * Test URL validation with valid URLs.
      */
     public function test_validate_url_valid(): void {
-        $this->assertEquals('https://example.com/logo.png', 
-            manager::validate_url('https://example.com/logo.png'));
-        $this->assertEquals('http://localhost/test.png', 
-            manager::validate_url('http://localhost/test.png'));
+        $this->assertEquals(
+            'https://example.com/logo.png',
+            manager::validate_url('https://example.com/logo.png')
+        );
+        $this->assertEquals(
+            'http://localhost/test.png',
+            manager::validate_url('http://localhost/test.png')
+        );
     }
 
     /**
@@ -88,11 +89,11 @@ class manager_test extends \advanced_testcase {
      * Test font URL validation allows only trusted sources.
      */
     public function test_validate_font_url_trusted(): void {
-        $googleUrl = 'https://fonts.googleapis.com/css2?family=Inter&display=swap';
-        $this->assertEquals($googleUrl, manager::validate_font_url($googleUrl));
-        
-        $typekitUrl = 'https://use.typekit.net/abc123.css';
-        $this->assertEquals($typekitUrl, manager::validate_font_url($typekitUrl));
+        $googleurl = 'https://fonts.googleapis.com/css2?family=Inter&display=swap';
+        $this->assertEquals($googleurl, manager::validate_font_url($googleurl));
+
+        $typekiturl = 'https://use.typekit.net/abc123.css';
+        $this->assertEquals($typekiturl, manager::validate_font_url($typekiturl));
     }
 
     /**
@@ -110,7 +111,7 @@ class manager_test extends \advanced_testcase {
         $this->assertEquals('Inter', manager::validate_font_family('Inter'));
         $this->assertEquals('Open Sans', manager::validate_font_family('Open Sans'));
         $this->assertEquals("'Roboto', sans-serif", manager::validate_font_family("'Roboto', sans-serif"));
-        
+
         // Reject dangerous characters.
         $this->assertEquals('', manager::validate_font_family('font; @import'));
         $this->assertEquals('', manager::validate_font_family('font<script>'));
@@ -137,7 +138,7 @@ class manager_test extends \advanced_testcase {
      */
     public function test_save_branding_requires_cohortid(): void {
         $this->expectException(\moodle_exception::class);
-        
+
         $data = new \stdClass();
         $data->cohortid = 0;
         manager::save_branding($data);
@@ -148,18 +149,18 @@ class manager_test extends \advanced_testcase {
      */
     public function test_save_branding_sanitises_colors(): void {
         global $DB;
-        
+
         // Create a cohort first.
         $cohort = $this->getDataGenerator()->create_cohort();
-        
+
         $data = new \stdClass();
         $data->cohortid = $cohort->id;
         $data->primarycolor = 'invalid';
         $data->secondarycolor = '#FF5500';
         $data->enabled = 1;
-        
+
         $id = manager::save_branding($data);
-        
+
         $record = $DB->get_record('local_cohortbranding', ['id' => $id]);
         $this->assertEquals('', $record->primarycolor); // Invalid was rejected.
         $this->assertEquals('#FF5500', $record->secondarycolor);
@@ -181,9 +182,9 @@ class manager_test extends \advanced_testcase {
         $branding->primarycolor = '#FF5500';
         $branding->secondarycolor = '#333333';
         $branding->logourl = 'https://example.com/logo.png';
-        
+
         $css = manager::generate_css($branding);
-        
+
         $this->assertStringContainsString('--cohort-primary: #FF5500', $css);
         $this->assertStringContainsString('--cohort-secondary: #333333', $css);
         $this->assertStringContainsString('Cohort Branding:', $css);
@@ -196,9 +197,9 @@ class manager_test extends \advanced_testcase {
         $branding = new \stdClass();
         $branding->primarycolor = '<script>alert(1)</script>';
         $branding->logourl = 'javascript:alert(1)';
-        
+
         $css = manager::generate_css($branding);
-        
+
         $this->assertStringNotContainsString('script', $css);
         $this->assertStringNotContainsString('javascript', $css);
     }
@@ -210,7 +211,7 @@ class manager_test extends \advanced_testcase {
         // This test verifies cache methods don't throw exceptions.
         manager::invalidate_cache(1);
         manager::invalidate_cache(null);
-        
+
         $this->assertTrue(true); // If we get here, no exceptions were thrown.
     }
 }

@@ -17,10 +17,10 @@
 /**
  * Cohort Branding - Manager service class
  *
- * [2️⃣ Architecture] Centralised logic with single responsibility
- * [3️⃣ Security] Strict typing, validation, capability checks
- * [5️⃣ Performance] MUC caching for cohort branding lookups
- * [8️⃣ Observability] Debug logging support
+ * Centralised logic with single responsibility
+ * Strict typing, validation, capability checks
+ * MUC caching for cohort branding lookups
+ * Debug logging support
  *
  * @package    local_cohortbranding
  * @copyright  2025 AI Grader
@@ -56,17 +56,17 @@ class manager {
     public static function get_user_branding(int $userid): ?object {
         global $DB;
 
-        // [3️⃣ Security] Validate user ID strictly.
+        // Validate user ID strictly.
         if ($userid <= 0) {
             self::debug_log("Invalid user ID: {$userid}");
             return null;
         }
 
-        // [5️⃣ Performance] Check MUC cache first.
+        // Check MUC cache first.
         $cache = \cache::make('local_cohortbranding', self::CACHE_AREA);
         $cachekey = 'user_' . $userid;
         $cached = $cache->get($cachekey);
-        
+
         if ($cached !== false) {
             return $cached === 'null' ? null : $cached;
         }
@@ -80,9 +80,9 @@ class manager {
         }
 
         $cohortids = array_keys($cohorts);
-        
-        // [3️⃣ Security] Use parameterised query.
-        list($insql, $params) = $DB->get_in_or_equal($cohortids, SQL_PARAMS_NAMED);
+
+        // Use parameterised query.
+        [$insql, $params] = $DB->get_in_or_equal($cohortids, SQL_PARAMS_NAMED);
         $params['enabled'] = 1;
 
         $sql = "SELECT *
@@ -108,7 +108,7 @@ class manager {
      */
     public static function invalidate_cache(?int $userid = null): void {
         $cache = \cache::make('local_cohortbranding', self::CACHE_AREA);
-        
+
         if ($userid !== null) {
             $cache->delete('user_' . $userid);
         } else {
@@ -141,7 +141,7 @@ class manager {
     public static function get_branding(int $id): ?object {
         global $DB;
 
-        // [3️⃣ Security] Validate ID.
+        // Validate ID.
         if ($id <= 0) {
             self::debug_log("Invalid branding ID: {$id}");
             return null;
@@ -160,7 +160,7 @@ class manager {
     public static function get_branding_by_cohort(int $cohortid): ?object {
         global $DB;
 
-        // [3️⃣ Security] Validate cohort ID.
+        // Validate cohort ID.
         if ($cohortid <= 0) {
             self::debug_log("Invalid cohort ID: {$cohortid}");
             return null;
@@ -180,12 +180,12 @@ class manager {
     public static function save_branding(object $data): int {
         global $DB;
 
-        // [3️⃣ Security] Validate required fields.
+        // Validate required fields.
         if (empty($data->cohortid) || $data->cohortid <= 0) {
             throw new \moodle_exception('invalidcohortid', 'local_cohortbranding');
         }
 
-        // [4️⃣ CSS Safety] Validate and sanitise colors.
+        // Validate and sanitise colors.
         if (!empty($data->primarycolor)) {
             $data->primarycolor = self::validate_hex_color($data->primarycolor);
         }
@@ -193,7 +193,7 @@ class manager {
             $data->secondarycolor = self::validate_hex_color($data->secondarycolor);
         }
 
-        // [3️⃣ Security] Validate URLs.
+        // Validate URLs.
         if (!empty($data->logourl)) {
             $data->logourl = self::validate_url($data->logourl);
         }
@@ -201,14 +201,14 @@ class manager {
             $data->fonturl = self::validate_font_url($data->fonturl);
         }
 
-        // [3️⃣ Security] Sanitise font family.
+        // Sanitise font family.
         if (!empty($data->fontfamily)) {
             $data->fontfamily = self::validate_font_family($data->fontfamily);
         }
 
         // Ensure priority is within bounds.
         $data->priority = max(0, min(99999, (int)($data->priority ?? 0)));
-        
+
         // Ensure enabled is boolean.
         $data->enabled = !empty($data->enabled) ? 1 : 0;
 
@@ -241,14 +241,14 @@ class manager {
     public static function delete_branding(int $id): bool {
         global $DB;
 
-        // [3️⃣ Security] Validate ID.
+        // Validate ID.
         if ($id <= 0) {
             self::debug_log("Invalid delete ID: {$id}");
             return false;
         }
 
         $result = $DB->delete_records('local_cohortbranding', ['id' => $id]);
-        
+
         if ($result) {
             self::invalidate_cache();
             self::debug_log("Deleted branding ID {$id}");
@@ -299,17 +299,17 @@ class manager {
     public static function validate_url(string $url): string {
         $url = trim($url);
         $url = clean_param($url, PARAM_URL);
-        
+
         // Only allow https URLs for security.
         if (!empty($url) && strpos($url, 'https://') === 0) {
             return $url;
         }
-        
+
         // Also allow http for local development.
         if (!empty($url) && strpos($url, 'http://') === 0) {
             return $url;
         }
-        
+
         self::debug_log("Invalid URL rejected: {$url}");
         return '';
     }
@@ -322,13 +322,13 @@ class manager {
      */
     public static function validate_font_url(string $url): string {
         $url = self::validate_url($url);
-        
+
         if (empty($url)) {
             return '';
         }
 
-        // [4️⃣ CSS Safety] Only allow trusted font sources.
-        $allowedDomains = [
+        // Only allow trusted font sources.
+        $alloweddomains = [
             'fonts.googleapis.com',
             'fonts.gstatic.com',
             'use.typekit.net',
@@ -336,7 +336,7 @@ class manager {
         ];
 
         $host = parse_url($url, PHP_URL_HOST);
-        foreach ($allowedDomains as $domain) {
+        foreach ($alloweddomains as $domain) {
             if ($host === $domain || substr($host, -strlen('.' . $domain)) === '.' . $domain) {
                 return $url;
             }
@@ -354,19 +354,19 @@ class manager {
      */
     public static function validate_font_family(string $fontfamily): string {
         $fontfamily = trim($fontfamily);
-        
-        // [4️⃣ CSS Safety] Only allow alphanumeric, spaces, quotes.
+
+        // Only allow alphanumeric, spaces, quotes.
         if (preg_match('/^[A-Za-z0-9\s\'",-]+$/', $fontfamily)) {
             return $fontfamily;
         }
-        
+
         self::debug_log("Invalid font family rejected: {$fontfamily}");
         return '';
     }
 
     /**
      * Generate safe CSS for a branding record.
-     * [4️⃣ CSS Safety] All CSS is scoped and validated.
+     * All CSS is scoped and validated.
      *
      * @param object $branding Branding record
      * @return string Safe CSS output
@@ -375,19 +375,19 @@ class manager {
         $css = [];
 
         // CSS variables for plugins to consume.
-        $cssVars = [];
-        
+        $cssvars = [];
+
         if (!empty($branding->primarycolor)) {
             $primary = self::validate_hex_color($branding->primarycolor);
             if ($primary) {
-                $cssVars[] = "    --cohort-primary: {$primary};";
+                $cssvars[] = "    --cohort-primary: {$primary};";
             }
         }
-        
+
         if (!empty($branding->secondarycolor)) {
             $secondary = self::validate_hex_color($branding->secondarycolor);
             if ($secondary) {
-                $cssVars[] = "    --cohort-secondary: {$secondary};";
+                $cssvars[] = "    --cohort-secondary: {$secondary};";
             }
         }
 
@@ -396,16 +396,16 @@ class manager {
         if ($fontfamily !== '') {
             $fonturl = !empty($branding->fonturl) ? self::validate_font_url((string)$branding->fonturl) : '';
             if ($fonturl !== '') {
-                // @import must come before every other rule in the stylesheet.
+                // The font import must come before every other rule in the stylesheet.
                 array_unshift($css, "@import url('" . addslashes($fonturl) . "');");
             }
             $quoted = preg_match('/[\'",]/', $fontfamily) ? $fontfamily : '"' . $fontfamily . '"';
-            $cssVars[] = "    --cohort-font: {$quoted}, system-ui, -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif;";
+            $cssvars[] = "    --cohort-font: {$quoted}, system-ui, -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif;";
         }
 
-        if (!empty($cssVars)) {
+        if (!empty($cssvars)) {
             $css[] = ":root {";
-            $css[] = implode("\n", $cssVars);
+            $css[] = implode("\n", $cssvars);
             $css[] = "}";
         }
 
@@ -559,23 +559,20 @@ nav#header.fixed-top {
 
     /**
      * Log debug message if debugging is enabled.
-     * [8️⃣ Observability] Debug logging support.
+     * Debug logging support.
      *
      * @param string $message Debug message
      */
     public static function debug_log(string $message): void {
-        // Use error_log() instead of debugging() to avoid on-screen output.
-        // debugging() with a message string causes visible stack traces in Moodle
-        // developer mode, which appears as errors to site admins. error_log()
-        // writes silently to the server's PHP error log.
-        if (debugging('', DEBUG_DEVELOPER)) {
-            error_log('[local_cohortbranding] ' . $message);
+        // Only when diagnostic messages are switched on and the site is in developer debugging mode.
+        if (get_config('local_cohortbranding', 'debuglog') && debugging('', DEBUG_DEVELOPER)) {
+            debugging('[local_cohortbranding] ' . $message, DEBUG_DEVELOPER);
         }
     }
 
     /**
      * Check if current user has manage capability.
-     * [3️⃣ Security] Centralised capability check.
+     * Centralised capability check.
      *
      * @return bool
      */
@@ -585,7 +582,7 @@ nav#header.fixed-top {
 
     /**
      * Require manage capability or throw exception.
-     * [3️⃣ Security] Guard clause pattern.
+     * Guard clause pattern.
      *
      * @throws \required_capability_exception
      */

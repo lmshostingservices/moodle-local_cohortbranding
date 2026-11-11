@@ -25,57 +25,80 @@
 
 namespace local_cohortbranding;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Checks with lms-labs.com that this site has unlocked the plugin, and unlocks it when credits allow.
+ *
+ * @package    local_cohortbranding
+ * @copyright  2026 AI Grader
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class unlock_verifier {
-    
+    /** Plugin id at lms-labs.com. */
     const PLUGIN_ID = 'cohortbranding';
+    /** Credits needed to unlock. */
     const CREDITS_REQUIRED = 1000;
+    /** Verify endpoint. */
     const API_URL = 'https://lms-labs.com/api/plugin-unlock/verify';
+    /** Unlock endpoint. */
     const UNLOCK_URL = 'https://lms-labs.com/api/plugin-unlock';
+    /** Cache key for the unlock state. */
     const CACHE_KEY = 'local_cohortbranding_unlocked';
+    /** Seconds to cache the unlock state. */
     const CACHE_DURATION = 3600;
-    
+
+    /**
+     * Is the plugin unlocked? Unlocks automatically when the site has credentials and enough credits.
+     *
+     * @return bool
+     */
     public static function is_unlocked(): bool {
         $cache = \cache::make('core', 'config');
         $cached = $cache->get(self::CACHE_KEY);
-        
+
         if ($cached !== false && is_array($cached)) {
             if (isset($cached['expires']) && $cached['expires'] > time()) {
                 return !empty($cached['unlocked']);
             }
         }
-        
+
         $result = self::verify_with_api();
-        
+
         if (!$result['unlocked'] && $result['has_credentials'] && $result['has_credits']) {
-            $autoUnlockResult = self::auto_unlock();
-            if ($autoUnlockResult) {
+            $autounlockresult = self::auto_unlock();
+            if ($autounlockresult) {
                 $result['unlocked'] = true;
             }
         }
-        
+
         $cache->set(self::CACHE_KEY, [
             'unlocked' => $result['unlocked'],
             'expires' => time() + self::CACHE_DURATION,
         ]);
-        
+
         return $result['unlocked'];
     }
-    
+
+    /**
+     * Forget the cached unlock state.
+     */
     public static function clear_cache(): void {
         $cache = \cache::make('core', 'config');
         $cache->delete(self::CACHE_KEY);
     }
-    
+
+    /**
+     * Ask lms-labs.com whether the site has unlocked the plugin. Fails closed.
+     *
+     * @return array unlocked, has_credentials, has_credits
+     */
     private static function verify_with_api(): array {
         global $CFG;
         $credentials = self::get_credentials();
-        
+
         if (empty($credentials['siteid']) || empty($credentials['apikey'])) {
             return ['unlocked' => false, 'has_credentials' => false, 'has_credits' => false];
         }
-        
+
         require_once($CFG->libdir . '/filelib.php');
         $curl = new \curl();
         $curl->setopt(['CURLOPT_TIMEOUT' => 10, 'CURLOPT_CONNECTTIMEOUT' => 5]);
@@ -86,30 +109,35 @@ class unlock_verifier {
             'apiKey'   => $credentials['apikey'],
         ]);
         $httpcode = (int)($curl->info['http_code'] ?? 0);
-        
+
         if ($httpcode !== 200 || empty($response)) {
-            // SECURITY: Fail-closed - deny access if API unreachable
+            // SECURITY: Fail-closed - deny access if API unreachable.
             return ['unlocked' => false, 'has_credentials' => true, 'has_credits' => false];
         }
-        
+
         $data = json_decode($response, true);
         $credits = isset($data['credits']) ? (int)$data['credits'] : 0;
-        
+
         return [
             'unlocked' => !empty($data['unlocked']),
             'has_credentials' => true,
             'has_credits' => ($credits >= self::CREDITS_REQUIRED) || ($credits === -1),
         ];
     }
-    
+
+    /**
+     * Unlock the plugin with the site's credits.
+     *
+     * @return bool true when unlocked
+     */
     private static function auto_unlock(): bool {
         global $CFG;
         $credentials = self::get_credentials();
-        
+
         if (empty($credentials['siteid']) || empty($credentials['apikey'])) {
             return false;
         }
-        
+
         require_once($CFG->libdir . '/filelib.php');
         $curl = new \curl();
         $curl->setopt([
@@ -126,34 +154,42 @@ class unlock_verifier {
 
         $response = $curl->post(self::UNLOCK_URL, $postdata);
         $httpcode  = (int)($curl->info['http_code'] ?? 0);
-        
+
         if ($httpcode === 200 && !empty($response)) {
             $data = json_decode($response, true);
             return !empty($data['success']);
         }
-        
+
         return false;
     }
-    
+
+    /**
+     * Site id and API key, from local_aiconfig when installed, else this plugin's settings.
+     *
+     * @return array siteid, apikey
+     */
     private static function get_credentials(): array {
         $siteid = '';
         $apikey = '';
-        
+
         if (class_exists('\\local_aiconfig\\config')) {
             $siteid = \local_aiconfig\config::get_site_id();
             $apikey = \local_aiconfig\config::get_api_key();
         }
-        
+
         if (empty($siteid)) {
             $siteid = get_config('local_cohortbranding', 'siteid');
         }
         if (empty($apikey)) {
             $apikey = get_config('local_cohortbranding', 'apikey');
         }
-        
+
         return ['siteid' => $siteid ?: '', 'apikey' => $apikey ?: ''];
     }
-    
+
+    /**
+     * Show the "unlock required" notice.
+     */
     public static function show_unlock_notice(): void {
         $message = get_string('unlock_required', 'local_cohortbranding');
         if (empty($message) || $message === '[[unlock_required]]') {
@@ -162,7 +198,12 @@ class unlock_verifier {
         }
         \core\notification::warning($message);
     }
-    
+
+    /**
+     * Is the plugin unlocked? Shows the notice when it is not.
+     *
+     * @return bool
+     */
     public static function check_and_notify(): bool {
         if (self::is_unlocked()) {
             return true;

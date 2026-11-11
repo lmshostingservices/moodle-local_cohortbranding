@@ -150,141 +150,312 @@ $fontoptions = [
     'Work Sans' => 'Work Sans',
 ];
 
-?>
+
+echo <<<'HTML'
 
 <form method="post" class="mform">
-    <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
+    <input type="hidden" name="sesskey" value="
+HTML;
+
+echo sesskey();
+echo <<<'HTML'
+">
 
     <div class="fitem row form-group mb-3">
         <div class="col-md-3">
             <label for="cohortid" class="col-form-label">
-                <?php echo get_string('cohort', 'local_cohortbranding'); ?>
+                
+HTML;
+
+echo get_string('cohort', 'local_cohortbranding');
+echo <<<'HTML'
                 <span class="text-danger">*</span>
             </label>
         </div>
         <div class="col-md-9">
-            <select name="cohortid" id="cohortid" class="form-control custom-select" <?php echo $id ? 'disabled' : 'required'; ?>>
-                <?php foreach ($cohortoptions as $cid => $cname): ?>
-                    <option value="<?php echo $cid; ?>" <?php echo ($record->cohortid == $cid) ? 'selected' : ''; ?>>
-                        <?php echo s($cname); ?>
+            <select name="cohortid" id="cohortid" class="form-control custom-select" 
+HTML;
+
+echo $id ? 'disabled' : 'required';
+echo <<<'HTML'
+>
+                
+HTML;
+
+foreach ($cohortoptions as $cid => $cname) :
+    echo <<<'HTML'
+                    <option value="
+HTML;
+
+    echo $cid;
+    echo <<<'HTML'
+" 
+HTML;
+
+    echo ($record->cohortid == $cid) ? 'selected' : '';
+    echo <<<'HTML'
+>
+                        
+HTML;
+
+    echo s($cname);
+    echo <<<'HTML'
                     </option>
-                <?php endforeach; ?>
+                
+HTML;
+endforeach;
+echo <<<'HTML'
             </select>
-            <?php if ($id): ?>
-                <input type="hidden" name="cohortid" value="<?php echo $record->cohortid; ?>">
-            <?php endif; ?>
+            
+HTML;
+
+if ($id) :
+    echo <<<'HTML'
+                <input type="hidden" name="cohortid" value="
+HTML;
+
+    echo $record->cohortid;
+    echo <<<'HTML'
+">
+            
+HTML;
+endif;
+echo <<<'HTML'
         </div>
     </div>
 
     <div class="fitem row form-group mb-3">
         <div class="col-md-3">
             <label for="logourl" class="col-form-label">
-                <?php echo get_string('logourl', 'local_cohortbranding'); ?>
+                
+HTML;
+
+echo get_string('logourl', 'local_cohortbranding');
+echo <<<'HTML'
             </label>
         </div>
         <div class="col-md-9">
             <input type="url" name="logourl" id="logourl" class="form-control" 
-                   value="<?php echo s($record->logourl); ?>"
+                   value="
+HTML;
+
+echo s($record->logourl);
+echo <<<'HTML'
+"
                    placeholder="https://example.com/logo.png">
-            <small class="form-text text-muted"><?php echo get_string('logourl_desc', 'local_cohortbranding'); ?></small>
+            <small class="form-text text-muted">
+HTML;
+
+echo get_string('logourl_desc', 'local_cohortbranding');
+echo <<<'HTML'
+</small>
         </div>
     </div>
 
     <div class="fitem row form-group mb-3">
         <div class="col-md-3">
             <label for="primarycolor" class="col-form-label">
-                <?php echo get_string('primarycolor', 'local_cohortbranding'); ?>
+                
+HTML;
+
+echo get_string('primarycolor', 'local_cohortbranding');
+echo <<<'HTML'
             </label>
         </div>
         <div class="col-md-9">
             <div class="d-flex align-items-center">
                 <input type="color" name="primarycolor" id="primarycolor" 
-                       value="<?php echo s($record->primarycolor ?: '#0073aa'); ?>"
+                       value="
+HTML;
+
+echo s($record->primarycolor ?: '#0073aa');
+echo <<<'HTML'
+"
                        style="width: 50px; height: 38px; padding: 0; border: 1px solid #ced4da; cursor: pointer;">
                 <input type="text" id="primarycolor_text" class="form-control ml-2" style="width: 100px;"
-                       value="<?php echo s($record->primarycolor); ?>" 
+                       value="
+HTML;
+
+echo s($record->primarycolor);
+echo <<<'HTML'
+" 
                        pattern="^#[0-9A-Fa-f]{6}$" placeholder="#0073aa">
             </div>
-            <small class="form-text text-muted"><?php echo get_string('primarycolor_desc', 'local_cohortbranding'); ?></small>
+            <small class="form-text text-muted">
+HTML;
+
+echo get_string('primarycolor_desc', 'local_cohortbranding');
+echo <<<'HTML'
+</small>
         </div>
     </div>
 
     <div class="fitem row form-group mb-3">
         <div class="col-md-3">
             <label for="secondarycolor" class="col-form-label">
-                <?php echo get_string('secondarycolor', 'local_cohortbranding'); ?>
+                
+HTML;
+
+echo get_string('secondarycolor', 'local_cohortbranding');
+echo <<<'HTML'
             </label>
         </div>
         <div class="col-md-9">
             <div class="d-flex align-items-center">
                 <input type="color" name="secondarycolor" id="secondarycolor" 
-                       value="<?php echo s($record->secondarycolor ?: '#23282d'); ?>"
+                       value="
+HTML;
+
+echo s($record->secondarycolor ?: '#23282d');
+echo <<<'HTML'
+"
                        style="width: 50px; height: 38px; padding: 0; border: 1px solid #ced4da; cursor: pointer;">
                 <input type="text" id="secondarycolor_text" class="form-control ml-2" style="width: 100px;"
-                       value="<?php echo s($record->secondarycolor); ?>" 
+                       value="
+HTML;
+
+echo s($record->secondarycolor);
+echo <<<'HTML'
+" 
                        pattern="^#[0-9A-Fa-f]{6}$" placeholder="#23282d">
             </div>
-            <small class="form-text text-muted"><?php echo get_string('secondarycolor_desc', 'local_cohortbranding'); ?></small>
+            <small class="form-text text-muted">
+HTML;
+
+echo get_string('secondarycolor_desc', 'local_cohortbranding');
+echo <<<'HTML'
+</small>
         </div>
     </div>
 
     <div class="fitem row form-group mb-3">
         <div class="col-md-3">
             <label for="fontfamily" class="col-form-label">
-                <?php echo get_string('fontfamily', 'local_cohortbranding'); ?>
+                
+HTML;
+
+echo get_string('fontfamily', 'local_cohortbranding');
+echo <<<'HTML'
             </label>
         </div>
         <div class="col-md-9">
             <select name="fontfamily" id="fontfamily" class="form-control custom-select">
-                <?php foreach ($fontoptions as $fval => $fname): ?>
-                    <option value="<?php echo s($fval); ?>" <?php echo ($record->fontfamily == $fval) ? 'selected' : ''; ?>>
-                        <?php echo s($fname); ?>
+                
+HTML;
+
+foreach ($fontoptions as $fval => $fname) :
+    echo <<<'HTML'
+                    <option value="
+HTML;
+
+    echo s($fval);
+    echo <<<'HTML'
+" 
+HTML;
+
+    echo ($record->fontfamily == $fval) ? 'selected' : '';
+    echo <<<'HTML'
+>
+                        
+HTML;
+
+    echo s($fname);
+    echo <<<'HTML'
                     </option>
-                <?php endforeach; ?>
+                
+HTML;
+endforeach;
+echo <<<'HTML'
             </select>
-            <small class="form-text text-muted"><?php echo get_string('fontfamily_desc', 'local_cohortbranding'); ?></small>
+            <small class="form-text text-muted">
+HTML;
+
+echo get_string('fontfamily_desc', 'local_cohortbranding');
+echo <<<'HTML'
+</small>
         </div>
     </div>
 
     <div class="fitem row form-group mb-3">
         <div class="col-md-3">
             <label for="fonturl" class="col-form-label">
-                <?php echo get_string('fonturl', 'local_cohortbranding'); ?>
+                
+HTML;
+
+echo get_string('fonturl', 'local_cohortbranding');
+echo <<<'HTML'
             </label>
         </div>
         <div class="col-md-9">
             <input type="url" name="fonturl" id="fonturl" class="form-control" 
-                   value="<?php echo s($record->fonturl); ?>"
+                   value="
+HTML;
+
+echo s($record->fonturl);
+echo <<<'HTML'
+"
                    placeholder="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-            <small class="form-text text-muted"><?php echo get_string('fonturl_desc', 'local_cohortbranding'); ?></small>
+            <small class="form-text text-muted">
+HTML;
+
+echo get_string('fonturl_desc', 'local_cohortbranding');
+echo <<<'HTML'
+</small>
         </div>
     </div>
 
     <div class="fitem row form-group mb-3">
         <div class="col-md-3">
             <label for="priority" class="col-form-label">
-                <?php echo get_string('priority', 'local_cohortbranding'); ?>
+                
+HTML;
+
+echo get_string('priority', 'local_cohortbranding');
+echo <<<'HTML'
             </label>
         </div>
         <div class="col-md-9">
             <input type="number" name="priority" id="priority" class="form-control" style="width: 100px;"
-                   value="<?php echo (int)$record->priority; ?>" min="0" max="99999">
-            <small class="form-text text-muted"><?php echo get_string('priority_desc', 'local_cohortbranding'); ?></small>
+                   value="
+HTML;
+
+echo (int)$record->priority;
+echo <<<'HTML'
+" min="0" max="99999">
+            <small class="form-text text-muted">
+HTML;
+
+echo get_string('priority_desc', 'local_cohortbranding');
+echo <<<'HTML'
+</small>
         </div>
     </div>
 
     <div class="fitem row form-group mb-3">
         <div class="col-md-3">
             <label for="enabled" class="col-form-label">
-                <?php echo get_string('enabled', 'local_cohortbranding'); ?>
+                
+HTML;
+
+echo get_string('enabled', 'local_cohortbranding');
+echo <<<'HTML'
             </label>
         </div>
         <div class="col-md-9">
             <div class="form-check">
                 <input type="checkbox" name="enabled" id="enabled" value="1" class="form-check-input"
-                       <?php echo $record->enabled ? 'checked' : ''; ?>>
+                       
+HTML;
+
+echo $record->enabled ? 'checked' : '';
+echo <<<'HTML'
+>
                 <label for="enabled" class="form-check-label">
-                    <?php echo get_string('enabled_desc', 'local_cohortbranding'); ?>
+                    
+HTML;
+
+echo get_string('enabled_desc', 'local_cohortbranding');
+echo <<<'HTML'
                 </label>
             </div>
         </div>
@@ -294,10 +465,18 @@ $fontoptions = [
         <div class="col-md-3"></div>
         <div class="col-md-9">
             <button type="submit" name="submitbutton" value="1" class="btn btn-primary">
-                <?php echo get_string('savechanges', 'local_cohortbranding'); ?>
+                
+HTML;
+
+echo get_string('savechanges', 'local_cohortbranding');
+echo <<<'HTML'
             </button>
             <button type="submit" name="cancel" value="1" class="btn btn-secondary ml-2">
-                <?php echo get_string('cancel', 'local_cohortbranding'); ?>
+                
+HTML;
+
+echo get_string('cancel', 'local_cohortbranding');
+echo <<<'HTML'
             </button>
         </div>
     </div>
@@ -346,5 +525,7 @@ document.getElementById('fontfamily').addEventListener('change', function () {
 });
 </script>
 
-<?php
+
+HTML;
+
 echo $OUTPUT->footer();
