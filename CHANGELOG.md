@@ -1,3 +1,9 @@
+## [v1.4.1] - 2026-11-12
+
+### Changed
+- The CSV import uploads its file through a standard Moodle form (file picker) and no longer reads $_SERVER or $_FILES directly, as the LMS Labs release desk requires. The import works as before: upload, review the preview, confirm.
+- Pairs with Premium SaaS theme 1.5.39, which keeps Cohort branding highlighted in the left menu on its edit and CSV import pages.
+
 ## [v1.4.0] - 2026-11-11
 
 ### Added

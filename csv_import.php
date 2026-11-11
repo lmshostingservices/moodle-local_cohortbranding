@@ -319,9 +319,14 @@ if (optional_param('downloadsample', 0, PARAM_INT)) {
 
 $step = optional_param('step', 1, PARAM_INT);
 
+$uploadform = new \local_cohortbranding\form\csv_upload_form(new moodle_url('/local/cohortbranding/csv_import.php'));
+if ($uploadform->is_cancelled()) {
+    redirect(new moodle_url('/local/cohortbranding/index.php'));
+}
+
 // Step 3: Confirm and create cohorts + branding.
 
-if ($step === 3 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
+if ($step === 3 && data_submitted() && confirm_sesskey()) {
     $importjson = optional_param('importjson', '', PARAM_RAW); // pipeline-ignore: PARAM_RAW — JSON, cleaned.
     $importrows = json_decode($importjson, true);
 
@@ -429,17 +434,20 @@ if ($step === 3 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
 
 // Step 2: Process uploaded CSV and scrape sites.
 
-if ($step === 2 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
-    $uploadedfile = $_FILES['csvfile'] ?? null;
+if ($step === 2 && $uploadform->get_data()) {
+    $csvcontent = $uploadform->get_file_content('csvfile');
+    $csvname = (string)$uploadform->get_new_filename('csvfile');
     $previewrows = [];
     $parseerror = '';
 
-    if (!$uploadedfile || $uploadedfile['error'] !== UPLOAD_ERR_OK) {
+    if ($csvcontent === false || $csvcontent === '') {
         $parseerror = 'No file uploaded or upload error. Please try again.';
-    } else if (strtolower(pathinfo($uploadedfile['name'], PATHINFO_EXTENSION)) !== 'csv') {
+    } else if (strtolower(pathinfo($csvname, PATHINFO_EXTENSION)) !== 'csv') {
         $parseerror = 'File must be a .csv file.';
     } else {
-        $csvrows = local_cohortbranding_parse_csv($uploadedfile['tmp_name']);
+        $csvpath = make_request_directory() . '/import.csv';
+        file_put_contents($csvpath, $csvcontent);
+        $csvrows = local_cohortbranding_parse_csv($csvpath);
         if (empty($csvrows)) {
             $parseerror = 'CSV file is empty or could not be parsed. Ensure it has a header row with "name" and "url" columns.';
         } else {
@@ -704,32 +712,7 @@ echo html_writer::tag(
     )
 );
 
-echo '<form method="post" enctype="multipart/form-data">';
-echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'step', 'value' => '2']);
-echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
-
-echo '<div class="fitem row form-group mb-3">';
-echo '<div class="col-md-3"><label for="csvfile" class="col-form-label"><strong>' . get_string(
-    'csv_upload',
-    'local_cohortbranding'
-) . '</strong></label></div>';
-echo '<div class="col-md-9">';
-echo '<input type="file" name="csvfile" id="csvfile" accept=".csv" class="form-control" required>';
-echo '<small class="form-text text-muted">Maximum 1000 rows. File must be UTF-8 encoded CSV with header row.</small>';
-echo '</div></div>';
-
-echo '<div class="fitem row form-group">';
-echo '<div class="col-md-3"></div>';
-echo '<div class="col-md-9">';
-echo '<button type="submit" class="btn btn-primary">' . get_string('csv_upload_scrape', 'local_cohortbranding') . '</button>';
-echo '&nbsp;&nbsp;';
-echo html_writer::link(
-    new moodle_url('/local/cohortbranding/index.php'),
-    get_string('cancel', 'local_cohortbranding'),
-    ['class' => 'btn btn-outline-secondary']
-);
-echo '</div></div>';
-echo '</form>';
+$uploadform->display();
 
 echo html_writer::end_div();
 echo $OUTPUT->footer();
