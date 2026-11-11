@@ -30,11 +30,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_cohortbranding';
-$plugin->version   = 2026110900;          // 2026-11-09, v1.3.21
+$plugin->version   = 2026111101;          // 2026-11-11, v1.3.22
 $plugin->requires  = 2022041900;           // Moodle 4.0 minimum
 $plugin->supported = [400, 500];           // Moodle 4.0 to 5.x
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.21'; // Logo is now a standard Moodle file upload (URL kept as fallback for CSV imports).
+$plugin->release   = '1.3.22'; // Full-width, card-edged tables on the list and CSV preview; no duplicate headings; CSV page uses the full width.
 
 // PHP version requirement - raised to 8.1 for modern features.
 $plugin->requires_php = '8.1';

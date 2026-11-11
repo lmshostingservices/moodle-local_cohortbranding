@@ -96,9 +96,11 @@ if (empty($brandings)) {
         get_string('fontfamily', 'local_cohortbranding'),
         get_string('priority', 'local_cohortbranding'),
         get_string('enabled', 'local_cohortbranding'),
-        ''
+        get_string('actions'),
     ];
-    $table->attributes['class'] = 'generaltable';
+    // Full-width table in its own bordered card, so it never looks cut off in wide or SaaS-style themes.
+    $table->attributes['class'] = 'generaltable table w-100 mb-0 local-cohortbranding-table';
+    $table->colclasses = ['', 'text-nowrap', 'text-nowrap', '', '', '', 'text-end'];
 
     foreach ($brandings as $b) {
         $editurl = new moodle_url('/local/cohortbranding/edit.php', ['id' => $b->id]);
@@ -126,7 +128,7 @@ if (empty($brandings)) {
             ? html_writer::tag('span', 'Yes', ['class' => 'badge badge-success bg-success'])
             : html_writer::tag('span', 'No', ['class' => 'badge badge-secondary bg-secondary']);
 
-        $actions = html_writer::link($editurl, get_string('edit'), ['class' => 'btn btn-sm btn-outline-primary mr-1']) . ' ';
+        $actions = html_writer::link($editurl, get_string('edit'), ['class' => 'btn btn-sm btn-outline-primary me-1 mr-1']) . ' ';
         $actions .= html_writer::link($deleteurl, get_string('delete'), [
             'class' => 'btn btn-sm btn-outline-danger',
             'onclick' => "return confirm('" . get_string('confirmdelete', 'local_cohortbranding') . "');"
@@ -143,7 +145,9 @@ if (empty($brandings)) {
         ];
     }
 
-    echo html_writer::table($table);
+    echo html_writer::div(html_writer::table($table), 'local-cohortbranding-card', [
+        'style' => 'border:1px solid #dee2e6;border-radius:12px;overflow:hidden;width:100%;',
+    ]);
 }
 
 echo $OUTPUT->footer();

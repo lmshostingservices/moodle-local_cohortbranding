@@ -42,12 +42,6 @@ class manager {
     /** @var string Cache definition name */
     private const CACHE_AREA = 'userbranding';
 
-    /** @var string File area for uploaded cohort logos (itemid = branding record id). */
-    public const LOGO_FILEAREA = 'logo';
-
-    /** @var int Maximum size of a logo downloaded during CSV import (5 MB). */
-    public const LOGO_MAX_DOWNLOAD_BYTES = 5242880;
-
     /** @var int Cache TTL in seconds (5 minutes) */
     private const CACHE_TTL = 300;
 
@@ -256,13 +250,6 @@ class manager {
         $result = $DB->delete_records('local_cohortbranding', ['id' => $id]);
         
         if ($result) {
-            // Remove any uploaded logo for this branding record.
-            get_file_storage()->delete_area_files(
-                \context_system::instance()->id,
-                'local_cohortbranding',
-                self::LOGO_FILEAREA,
-                $id
-            );
             self::invalidate_cache();
             self::debug_log("Deleted branding ID {$id}");
         }
@@ -426,10 +413,12 @@ class manager {
             }
         }
 
-        // Logo replacement: uploaded file takes precedence over legacy/imported URL.
-        $logourl = self::get_logo_url($branding);
-        if ($logourl) {
-            $css[] = self::generate_logo_css($logourl);
+        // Logo replacement.
+        if (!empty($branding->logourl)) {
+            $logourl = self::validate_url($branding->logourl);
+            if ($logourl) {
+                $css[] = self::generate_logo_css($logourl);
+            }
         }
 
         return implode("\n\n", $css);
@@ -532,196 +521,6 @@ nav#header.fixed-top {
     background-color: {$color} !important;
     color: #fff !important;
 }";
-    }
-
-    /**
-     * File manager options for the logo upload.
-     *
-     * @return array
-     */
-    public static function logo_filemanager_options(): array {
-        global $CFG;
-        require_once($CFG->dirroot . '/repository/lib.php');
-        return [
-            'subdirs' => 0,
-            'maxfiles' => 1,
-            'maxbytes' => get_max_upload_file_size($CFG->maxbytes),
-            'accepted_types' => ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico'],
-            'return_types' => FILE_INTERNAL,
-        ];
-    }
-
-    /**
-     * Get the uploaded logo file for a branding record, if any.
-     *
-     * @param int $brandingid Branding record ID
-     * @return \stored_file|null
-     */
-    public static function get_logo_file(int $brandingid): ?\stored_file {
-        if ($brandingid <= 0) {
-            return null;
-        }
-        $files = get_file_storage()->get_area_files(
-            \context_system::instance()->id,
-            'local_cohortbranding',
-            self::LOGO_FILEAREA,
-            $brandingid,
-            'sortorder, itemid, filepath, filename',
-            false
-        );
-        return $files ? reset($files) : null;
-    }
-
-    /**
-     * Download a remote logo and store it as the uploaded logo for a branding record.
-     *
-     * Uses Moodle's curl wrapper so site proxy settings and the
-     * "cURL blocked hosts / allowed ports" security settings apply.
-     *
-     * @param int $brandingid Branding record ID
-     * @param string $url Remote logo URL
-     * @return string Empty string on success, otherwise an error message
-     */
-    public static function store_logo_from_url(int $brandingid, string $url): string {
-        global $CFG;
-        require_once($CFG->libdir . '/filelib.php');
-
-        $url = self::validate_url($url);
-        if ($brandingid <= 0 || $url === '') {
-            return 'invalid logo URL';
-        }
-
-        $curl = new \curl();
-        $curl->setopt([
-            'CURLOPT_TIMEOUT' => 20,
-            'CURLOPT_CONNECTTIMEOUT' => 10,
-            'CURLOPT_FOLLOWLOCATION' => true,
-            'CURLOPT_MAXREDIRS' => 5,
-            'CURLOPT_USERAGENT' => 'Mozilla/5.0 (Moodle; local_cohortbranding logo import)',
-        ]);
-        $content = $curl->get($url);
-        $info = $curl->get_info();
-        $httpcode = (int)($info['http_code'] ?? 0);
-
-        if ($curl->get_errno() || $content === false || $content === '') {
-            return 'download failed' . ($curl->error ? ' (' . $curl->error . ')' : '');
-        }
-        if ($httpcode < 200 || $httpcode >= 300) {
-            return "download failed (HTTP {$httpcode})";
-        }
-        if (strlen($content) > self::LOGO_MAX_DOWNLOAD_BYTES) {
-            return 'file too large';
-        }
-
-        $ext = self::detect_logo_extension($content);
-        if ($ext === '') {
-            return 'not a supported image';
-        }
-        if ($ext === 'svg' && !self::is_safe_svg($content)) {
-            return 'SVG contains scripts or external content';
-        }
-
-        $fs = get_file_storage();
-        $contextid = \context_system::instance()->id;
-        $fs->delete_area_files($contextid, 'local_cohortbranding', self::LOGO_FILEAREA, $brandingid);
-        $fs->create_file_from_string([
-            'contextid' => $contextid,
-            'component' => 'local_cohortbranding',
-            'filearea' => self::LOGO_FILEAREA,
-            'itemid' => $brandingid,
-            'filepath' => '/',
-            'filename' => 'logo.' . $ext,
-            'source' => $url,
-        ], $content);
-
-        return '';
-    }
-
-    /**
-     * Work out the image type from file content (never trust the remote extension/MIME).
-     *
-     * @param string $content File content
-     * @return string Extension, or empty string if not a supported image
-     */
-    private static function detect_logo_extension(string $content): string {
-        $head = ltrim(substr($content, 0, 1024));
-        if (preg_match('/^(<\?xml[^>]*>\s*)?(<!--.*?-->\s*)*(<!DOCTYPE svg[^>]*>\s*)?<svg[\s>]/is', $head)) {
-            return 'svg';
-        }
-        if (strncmp($content, "\x00\x00\x01\x00", 4) === 0) {
-            return 'ico';
-        }
-        $imginfo = @getimagesizefromstring($content);
-        if (!$imginfo) {
-            return '';
-        }
-        switch ($imginfo[2]) {
-            case IMAGETYPE_PNG:
-                return 'png';
-            case IMAGETYPE_JPEG:
-                return 'jpg';
-            case IMAGETYPE_GIF:
-                return 'gif';
-            case IMAGETYPE_WEBP:
-                return 'webp';
-            case IMAGETYPE_ICO:
-                return 'ico';
-        }
-        return '';
-    }
-
-    /**
-     * Reject SVGs that could run script when served from this site.
-     *
-     * @param string $svg SVG markup
-     * @return bool
-     */
-    private static function is_safe_svg(string $svg): bool {
-        $patterns = [
-            '/<script/i',
-            '/<foreignObject/i',
-            '/\son[a-z]+\s*=/i',
-            '/javascript:/i',
-            '/<!ENTITY/i',
-            '/xlink:href\s*=\s*["\']\s*(?!#|data:image\/)/i',
-            '/\shref\s*=\s*["\']\s*(?!#|data:image\/)/i',
-        ];
-        foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $svg)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Resolve the logo URL for a branding record.
-     * An uploaded file wins; otherwise falls back to the stored logourl (e.g. from CSV import).
-     *
-     * @param object $branding Branding record
-     * @return string Logo URL or empty string
-     */
-    public static function get_logo_url(object $branding): string {
-        if (!empty($branding->id)) {
-            $file = self::get_logo_file((int)$branding->id);
-            if ($file) {
-                $url = \moodle_url::make_pluginfile_url(
-                    $file->get_contextid(),
-                    $file->get_component(),
-                    $file->get_filearea(),
-                    $file->get_itemid(),
-                    $file->get_filepath(),
-                    $file->get_filename()
-                );
-                // Cache-bust when the logo is replaced.
-                $url->param('rev', $file->get_timemodified());
-                return $url->out(false);
-            }
-        }
-        if (!empty($branding->logourl)) {
-            return self::validate_url($branding->logourl);
-        }
-        return '';
     }
 
     /**

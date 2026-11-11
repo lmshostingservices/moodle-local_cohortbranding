@@ -89,36 +89,3 @@ function local_cohortbranding_extend_navigation(global_navigation $nav): void {
 function local_cohortbranding_extend_settings_navigation(settings_navigation $nav, context $context): void {
     // Settings are added via settings.php.
 }
-
-/**
- * Serve uploaded cohort logos.
- *
- * @param stdClass $course Course object
- * @param stdClass $cm Course module
- * @param context $context Context
- * @param string $filearea File area
- * @param array $args Extra arguments (itemid, path)
- * @param bool $forcedownload Whether to force download
- * @param array $options Additional options
- * @return bool False if file not found, does not return if found
- */
-function local_cohortbranding_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
-    if ($context->contextlevel != CONTEXT_SYSTEM || $filearea !== 'logo') {
-        return false;
-    }
-
-    // Logos are only shown to logged-in users, so require login to fetch them.
-    require_login(null, false);
-
-    $itemid = (int)array_shift($args);
-    $filename = array_pop($args);
-    $filepath = $args ? '/' . implode('/', $args) . '/' : '/';
-
-    $fs = get_file_storage();
-    $file = $fs->get_file($context->id, 'local_cohortbranding', $filearea, $itemid, $filepath, $filename);
-    if (!$file || $file->is_directory()) {
-        return false;
-    }
-
-    send_stored_file($file, 86400, 0, $forcedownload, $options);
-}

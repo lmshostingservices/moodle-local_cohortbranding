@@ -35,6 +35,7 @@ $context = context_system::instance();
 require_capability('local/cohortbranding:manage', $context);
 
 $PAGE->set_url('/local/cohortbranding/csv_import.php');
+navigation_node::override_active_url(new moodle_url('/local/cohortbranding/index.php'));
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('csv_import', 'local_cohortbranding'));
@@ -300,7 +301,6 @@ if ($step === 3 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
     $importrows = json_decode($importjson, true);
 
     $created = 0; $skipped = 0; $errors = [];
-    $logosstored = 0; $logowarnings = [];
 
     if ($importrows) {
         foreach ($importrows as $row) {
@@ -356,21 +356,8 @@ if ($step === 3 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
             $data->enabled        = 1;
 
             try {
-                $brandingid = \local_cohortbranding\manager::save_branding($data);
+                \local_cohortbranding\manager::save_branding($data);
                 $created++;
-
-                // 4. Download the logo and store it as an uploaded file.
-                // On success the URL is cleared; on failure it is kept as a fallback.
-                if ($logourl) {
-                    $logoerror = \local_cohortbranding\manager::store_logo_from_url($brandingid, $logourl);
-                    if ($logoerror === '') {
-                        $DB->set_field('local_cohortbranding', 'logourl', '', ['id' => $brandingid]);
-                        $logosstored++;
-                    } else {
-                        $logowarnings[] = get_string('csv_import_logofailed', 'local_cohortbranding',
-                            (object)['name' => $name, 'error' => $logoerror]);
-                    }
-                }
             } catch (Exception $e) {
                 $errors[] = "Could not save branding for \"{$name}\": " . $e->getMessage();
                 $skipped++;
@@ -378,28 +365,14 @@ if ($step === 3 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
         }
     }
 
-    if ($logosstored) {
-        \local_cohortbranding\manager::invalidate_cache();
-    }
-
     // Show results
     echo $OUTPUT->header();
-    echo html_writer::tag('h4', get_string('csv_import', 'local_cohortbranding'));
 
     if ($created > 0) {
         echo $OUTPUT->notification(
             get_string('csv_import_success', 'local_cohortbranding', $created),
             'success'
         );
-    }
-    if ($logosstored > 0) {
-        echo $OUTPUT->notification(
-            get_string('csv_import_logosstored', 'local_cohortbranding', $logosstored),
-            'success'
-        );
-    }
-    foreach ($logowarnings as $warning) {
-        echo $OUTPUT->notification($warning, 'warning');
     }
     if ($skipped > 0) {
         echo $OUTPUT->notification("{$skipped} row(s) skipped (already have branding or no name).", 'info');
@@ -498,7 +471,6 @@ if ($step === 2 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
 
     // Render Step 2 preview page
     echo $OUTPUT->header();
-    echo html_writer::tag('h4', get_string('csv_import', 'local_cohortbranding'));
 
     if ($parseError) {
         echo $OUTPUT->notification($parseError, 'error');
@@ -519,8 +491,8 @@ if ($step === 2 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'step', 'value' => '3']);
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 
-    echo '<div style="overflow-x:auto;">';
-    echo '<table class="generaltable" style="min-width:900px;margin-bottom:16px;">';
+    echo '<div style="overflow-x:auto;width:100%;border:1px solid #dee2e6;border-radius:12px;margin-bottom:16px;">';
+    echo '<table class="generaltable table w-100" style="min-width:900px;margin-bottom:0;">';
     echo '<thead><tr>'
         . '<th style="width:35px;"><input type="checkbox" id="selectall" checked title="Select all"> All</th>'
         . '<th>School / Cohort Name</th>'
@@ -636,9 +608,8 @@ if ($step === 2 && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
 // ─── Step 1: Upload form ──────────────────────────────────────────────────────
 
 echo $OUTPUT->header();
-echo html_writer::tag('h4', get_string('csv_import', 'local_cohortbranding'));
 
-echo html_writer::start_div('', ['style' => 'max-width:700px;']);
+echo html_writer::start_div('local-cohortbranding-import', ['style' => 'width:100%;']);
 
 echo html_writer::start_div('alert alert-info', ['style' => 'margin-bottom:20px;']);
 echo '<strong>' . get_string('csv_import_howto', 'local_cohortbranding') . '</strong>';

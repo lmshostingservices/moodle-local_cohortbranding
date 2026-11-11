@@ -1,11 +1,15 @@
-## [v1.3.21] - 2026-11-09
+## [v1.3.22] - 2026-11-11
 
 ### Changed
-- Logo is now set with a standard Moodle file manager upload on the add/edit page instead of a URL field.
-- Uploaded logos are stored in the plugin's `logo` file area (system context) and served via `pluginfile.php` to logged-in users.
-- An uploaded logo takes precedence; an existing/CSV-imported logo URL is still used as a fallback and can be cleared from the edit page.
-- Uploaded logo files are removed when a branding record is deleted.
-- CSV import now downloads each logo (scraped or from `logo_url`) and stores it as an uploaded file, so imported and manually edited cohorts use the same storage. Downloads use Moodle's curl wrapper (proxy and blocked-host settings apply), are type-checked from file content, capped at 5 MB, and SVGs containing scripts or external references are rejected. If a download fails, the URL is kept as a fallback and a warning is shown.
+- Re-released under a new version because the v1.3.21 tag already holds a different source tree. Contains the full-width list and CSV import fixes listed under v1.3.21.
+
+## [v1.3.21] - 2026-11-11
+
+### Fixed
+- The branding list now uses the full page width inside a bordered card, with an Actions column heading, so it no longer looks cut off half way in the Premium SaaS theme or other wide themes.
+- The CSV import page uses the full width instead of a 700px box, and the CSV preview table sits in a bordered, scrollable card.
+- Removed the duplicate "Import from CSV" heading under the page title.
+- The edit and CSV import pages now keep Cohort branding highlighted in the navigation.
 
 ## [v1.3.20] - 2026-08-29
 
