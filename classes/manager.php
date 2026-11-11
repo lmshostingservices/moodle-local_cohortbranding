@@ -391,6 +391,18 @@ class manager {
             }
         }
 
+        // Font: the stored family and URL were saved by the edit form but never output before 1.3.23.
+        $fontfamily = !empty($branding->fontfamily) ? self::validate_font_family((string)$branding->fontfamily) : '';
+        if ($fontfamily !== '') {
+            $fonturl = !empty($branding->fonturl) ? self::validate_font_url((string)$branding->fonturl) : '';
+            if ($fonturl !== '') {
+                // @import must come before every other rule in the stylesheet.
+                array_unshift($css, "@import url('" . addslashes($fonturl) . "');");
+            }
+            $quoted = preg_match('/[\'",]/', $fontfamily) ? $fontfamily : '"' . $fontfamily . '"';
+            $cssVars[] = "    --cohort-font: {$quoted}, system-ui, -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif;";
+        }
+
         if (!empty($cssVars)) {
             $css[] = ":root {";
             $css[] = implode("\n", $cssVars);
@@ -419,6 +431,10 @@ class manager {
             if ($logourl) {
                 $css[] = self::generate_logo_css($logourl);
             }
+        }
+
+        if ($fontfamily !== '') {
+            $css[] = "/* Cohort Branding: Font */\nbody {\n    font-family: var(--cohort-font) !important;\n}";
         }
 
         return implode("\n\n", $css);

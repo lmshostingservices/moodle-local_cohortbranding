@@ -1,3 +1,14 @@
+## [v1.3.23] - 2026-11-11
+
+### Fixed
+- The chosen font and font URL are now output. They were saved but never written to the branding CSS.
+- Adding or removing a user from a cohort now refreshes their branding immediately instead of after the 5-minute cache.
+- Deleting a cohort removes its branding record.
+
+### Added
+- `--cohort-font` CSS variable alongside `--cohort-primary` and `--cohort-secondary`.
+- Works with the Premium SaaS theme (theme_lmslabs 1.5.38+), which reads the cohort's colour, logo and font directly.
+
 ## [v1.3.22] - 2026-11-11
 
 ### Changed
