@@ -1,3 +1,8 @@
+## [v1.4.2] - 2026-11-12
+
+### Fixed
+- Text on branded buttons is now readable. Primary and secondary buttons took the cohort's colour as their background but kept the theme's text colour, so a dark brand colour gave dark text on a dark button (seen on the Client Portal Search and Add to group buttons). The text is now white on dark colours and near-black on light ones, including on hover, focus and press.
+
 ## [v1.4.1] - 2026-11-12
 
 ### Changed

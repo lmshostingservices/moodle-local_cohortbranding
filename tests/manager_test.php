@@ -214,4 +214,19 @@ final class manager_test extends \advanced_testcase {
 
         $this->assertTrue(true); // If we get here, no exceptions were thrown.
     }
+
+    /**
+     * Branded buttons get readable text: white on dark colours, near-black on light ones.
+     */
+    public function test_contrast_text(): void {
+        $this->assertSame('#ffffff', manager::contrast_text('#1e3a5f'));
+        $this->assertSame('#ffffff', manager::contrast_text('#0f766e'));
+        $this->assertSame('#ffffff', manager::contrast_text('#000'));
+        $this->assertSame('#111827', manager::contrast_text('#ffffff'));
+        $this->assertSame('#111827', manager::contrast_text('#facc15'));
+        $this->assertSame('#111827', manager::contrast_text('#a7f3d0'));
+        $css = manager::generate_css((object) ['primarycolor' => '#0f766e', 'secondarycolor' => '#fde68a']);
+        $this->assertStringContainsString('--bs-btn-hover-color: #ffffff', $css);
+        $this->assertStringContainsString('--bs-btn-hover-color: #111827', $css);
+    }
 }

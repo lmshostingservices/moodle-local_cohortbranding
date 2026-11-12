@@ -441,12 +441,39 @@ class manager {
     }
 
     /**
+     * Text colour that is readable on a background colour: white on dark colours, near-black on light ones.
+     *
+     * Uses WCAG relative luminance, so text on a cohort's buttons always contrasts with the button.
+     *
+     * @param string $color Validated hex color (#rgb or #rrggbb)
+     * @return string '#ffffff' or '#111827'
+     */
+    public static function contrast_text(string $color): string {
+        $hex = ltrim($color, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        if (!preg_match('/^[0-9a-f]{6}$/i', $hex)) {
+            return '#ffffff';
+        }
+        $lum = 0;
+        foreach ([0.2126, 0.7152, 0.0722] as $i => $weight) {
+            $c = hexdec(substr($hex, $i * 2, 2)) / 255;
+            $c = $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+            $lum += $weight * $c;
+        }
+        // White text wins when its contrast ratio beats near-black's (#111827, luminance about 0.0086).
+        return (1.05 / ($lum + 0.05)) >= (($lum + 0.05) / 0.0586) ? '#ffffff' : '#111827';
+    }
+
+    /**
      * Generate CSS for primary color.
      *
      * @param string $color Validated hex color
      * @return string CSS rules
      */
     private static function generate_primary_css(string $color): string {
+        $text = self::contrast_text($color);
         return "
 /* Cohort Branding: Primary color */
 nav#header,
@@ -457,6 +484,11 @@ nav#header.fixed-top {
 .btn-primary {
     background-color: {$color} !important;
     border-color: {$color} !important;
+    color: {$text} !important;
+    --bs-btn-color: {$text};
+    --bs-btn-hover-color: {$text};
+    --bs-btn-active-color: {$text};
+    --bs-btn-disabled-color: {$text};
 }
 
 .btn-primary:hover,
@@ -464,6 +496,7 @@ nav#header.fixed-top {
 .btn-primary:active {
     background-color: {$color} !important;
     border-color: {$color} !important;
+    color: {$text} !important;
     filter: brightness(0.9);
 }
 
@@ -482,6 +515,7 @@ nav#header.fixed-top {
      * @return string CSS rules
      */
     private static function generate_secondary_css(string $color): string {
+        $text = self::contrast_text($color);
         return "
 /* Cohort Branding: Secondary color */
 /* Only target page content headings, not admin tables/menus */
@@ -509,6 +543,11 @@ nav#header.fixed-top {
 .btn-secondary {
     background-color: {$color} !important;
     border-color: {$color} !important;
+    color: {$text} !important;
+    --bs-btn-color: {$text};
+    --bs-btn-hover-color: {$text};
+    --bs-btn-active-color: {$text};
+    --bs-btn-disabled-color: {$text};
 }
 
 .btn-secondary:hover,
@@ -516,6 +555,7 @@ nav#header.fixed-top {
 .btn-secondary:active {
     background-color: {$color} !important;
     border-color: {$color} !important;
+    color: {$text} !important;
     filter: brightness(0.9);
 }
 

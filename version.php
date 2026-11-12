@@ -30,11 +30,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_cohortbranding';
-$plugin->version   = 2026111200;          // 2026-11-12, v1.4.1
+$plugin->version   = 2026111201;          // 2026-11-12, v1.4.2
 $plugin->requires  = 2022041900;           // Moodle 4.0 minimum.
 $plugin->supported = [400, 503];           // Moodle 4.0 to 5.3.
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.1'; // CSV import uses a Moodle upload form.
+$plugin->release   = '1.4.2'; // Readable text on branded buttons.
 
 // PHP version requirement - raised to 8.1 for modern features.
 $plugin->requires_php = '8.1';
