@@ -30,11 +30,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_cohortbranding';
-$plugin->version   = 2026111201;          // 2026-11-12, v1.4.2
+$plugin->version   = 2026111700;          // 2026-11-17, v1.4.3
 $plugin->requires  = 2022041900;           // Moodle 4.0 minimum.
 $plugin->supported = [400, 503];           // Moodle 4.0 to 5.3.
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.2'; // Readable text on branded buttons.
+$plugin->release   = '1.4.3'; // Main organisation's branding.
 
 // PHP version requirement - raised to 8.1 for modern features.
 $plugin->requires_php = '8.1';

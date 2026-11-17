@@ -1,3 +1,9 @@
+## [v1.4.3] - 2026-11-17
+
+### Changed
+- A person who belongs to several Client Portal clients now gets the branding of their main organisation (Client Portal 2.1 or later), instead of whichever cohort branding has the highest priority. Everyone else is unchanged: the highest priority branding among their cohorts wins.
+- The branding lookup uses Moodle's database API for "first match" instead of a LIMIT clause, so it works on every database Moodle supports.
+
 ## [v1.4.2] - 2026-11-12
 
 ### Fixed
