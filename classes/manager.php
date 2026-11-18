@@ -81,24 +81,61 @@ class manager {
 
         $cohortids = array_keys($cohorts);
 
-        // Use parameterised query.
-        [$insql, $params] = $DB->get_in_or_equal($cohortids, SQL_PARAMS_NAMED);
-        $params['enabled'] = 1;
+        // A person in several Client Portal clients gets their main organisation's branding.
+        $result = self::main_client_branding($userid, $cohortids);
 
-        $sql = "SELECT *
-                FROM {local_cohortbranding}
-                WHERE cohortid $insql
-                  AND enabled = :enabled
-                ORDER BY priority DESC
-                LIMIT 1";
-
-        $record = $DB->get_record_sql($sql, $params);
-        $result = $record ?: null;
+        if (!$result) {
+            // Otherwise the highest priority branding among their cohorts.
+            [$insql, $params] = $DB->get_in_or_equal($cohortids, SQL_PARAMS_NAMED);
+            $params['enabled'] = 1;
+            $records = $DB->get_records_sql(
+                "SELECT *
+                   FROM {local_cohortbranding}
+                  WHERE cohortid $insql
+                        AND enabled = :enabled
+               ORDER BY priority DESC, id ASC",
+                $params,
+                0,
+                1
+            );
+            $result = $records ? reset($records) : null;
+        }
 
         // Cache the result.
         $cache->set($cachekey, $result ?? 'null');
 
         return $result;
+    }
+
+    /**
+     * Branding of the person's main organisation in Client Portal (2.1 or later), when they belong to it and it has
+     * enabled branding.
+     *
+     * @param int $userid
+     * @param int[] $cohortids the person's cohorts
+     * @return object|null
+     */
+    private static function main_client_branding(int $userid, array $cohortids): ?object {
+        global $DB;
+        $people = '\\local_clientportal\\people';
+        if (!class_exists($people) || !method_exists($people, 'main_client')) {
+            return null;
+        }
+        try {
+            $clientid = $people::main_client($userid);
+            if (!$clientid) {
+                return null;
+            }
+            $cohortid = (int)$DB->get_field('local_clientportal_client', 'cohortid', ['id' => $clientid]);
+            if (!$cohortid || !in_array($cohortid, array_map('intval', $cohortids), true)) {
+                return null;
+            }
+            $record = $DB->get_record('local_cohortbranding', ['cohortid' => $cohortid, 'enabled' => 1]);
+            return $record ?: null;
+        } catch (\Throwable $e) {
+            self::debug_log('Main organisation lookup failed: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**

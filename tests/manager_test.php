@@ -26,15 +26,21 @@
 
 namespace local_cohortbranding;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(manager::class)]
 /**
  * Test cases for the manager class.
+ *
+ * @package    local_cohortbranding
+ * @copyright  2025 AI Grader
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \local_cohortbranding\manager
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(manager::class)]
 final class manager_test extends \advanced_testcase {
     /**
      * Set up before each test.
      */
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
     }
 
@@ -228,5 +234,51 @@ final class manager_test extends \advanced_testcase {
         $css = manager::generate_css((object) ['primarycolor' => '#0f766e', 'secondarycolor' => '#fde68a']);
         $this->assertStringContainsString('--bs-btn-hover-color: #ffffff', $css);
         $this->assertStringContainsString('--bs-btn-hover-color: #111827', $css);
+    }
+
+    /**
+     * Without Client Portal, the highest priority branding wins.
+     */
+    public function test_highest_priority_branding_wins(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/cohort/lib.php');
+        $gen = $this->getDataGenerator();
+        $low = $gen->create_cohort();
+        $high = $gen->create_cohort();
+        manager::save_branding((object)['cohortid' => $low->id, 'enabled' => 1, 'priority' => 1, 'primarycolor' => '#111111']);
+        manager::save_branding((object)['cohortid' => $high->id, 'enabled' => 1, 'priority' => 5, 'primarycolor' => '#222222']);
+        $user = $gen->create_user();
+        cohort_add_member($low->id, $user->id);
+        cohort_add_member($high->id, $user->id);
+        manager::invalidate_cache((int)$user->id);
+        $this->assertSame((int)$high->id, (int)manager::get_user_branding((int)$user->id)->cohortid);
+    }
+
+    /**
+     * With Client Portal 2.1, a person in several clients gets their main organisation's branding.
+     */
+    public function test_main_organisation_branding_wins(): void {
+        global $CFG;
+        if (!class_exists('\\local_clientportal\\people')) {
+            $this->markTestSkipped('Client Portal 2.1 is not installed.');
+        }
+        require_once($CFG->dirroot . '/cohort/lib.php');
+        $this->setAdminUser();
+        $client = fn(string $name) => \local_clientportal\manager::save_client((object)['name' => $name, 'cohortid' => 0,
+            'active' => 1, 'billing' => 0, 'ratecredit' => 0, 'ratelearner' => 0, 'rateenrol' => 0]);
+        $a = $client('Alpha');
+        $b = $client('Bravo');
+        $cohorta = (int)\local_clientportal\manager::get_client($a)->cohortid;
+        $cohortb = (int)\local_clientportal\manager::get_client($b)->cohortid;
+        manager::save_branding((object)['cohortid' => $cohorta, 'enabled' => 1, 'priority' => 1, 'primarycolor' => '#111111']);
+        manager::save_branding((object)['cohortid' => $cohortb, 'enabled' => 1, 'priority' => 9, 'primarycolor' => '#222222']);
+        $user = $this->getDataGenerator()->create_user();
+        cohort_add_member($cohorta, $user->id);
+        cohort_add_member($cohortb, $user->id);
+        // Alpha was joined first, so it is the main organisation, even with the lower priority.
+        manager::invalidate_cache((int)$user->id);
+        $this->assertSame($cohorta, (int)manager::get_user_branding((int)$user->id)->cohortid);
+        \local_clientportal\people::set_main_client((int)$user->id, $b);
+        $this->assertSame($cohortb, (int)manager::get_user_branding((int)$user->id)->cohortid);
     }
 }
